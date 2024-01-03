@@ -1,0 +1,55 @@
+# ref: https://marc.it/dockerize-application-with-nginx-and-php8/
+
+version: "3.8"
+services:
+
+  web:
+    image: nginx:1.24-perl
+    restart: always
+    volumes:
+    - ./mydomain.test:/var/www/html
+    - ./default.conf:/etc/nginx/conf.d/default.conf
+    # Certs mapped from server to container
+    - /etc/letsencrypt/live/mydomain.test/fullchain.pem:/etc/letsencrypt/live/mydomain.test/fullchain.pem
+    - /etc/letsencrypt/live/mydomain.test/privkey.pem:/etc/letsencrypt/live/mydomain.test/privkey.pem
+    ports:
+    - "80:80"
+    - "443:443"
+    environment:
+    - NGINX_HOST=mydomain.test
+    - NGINX_PORT=80
+    links:
+    - php-fpm
+
+  php-fpm:
+    image: php:7.4-fpm
+    expose:
+    - "9000"
+    restart: always
+    environment:
+    - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+    volumes:
+    - ./mydomain.test:/var/www/html
+    links:
+    - db
+    command: 
+    - /bin/bash
+    - -c
+    - |
+      docker-php-ext-install mysqli
+      docker-php-ext-enable mysqli
+      php-fpm
+
+  db:
+    image: mysql
+    restart: always
+    ports:
+    - "3306:3306"
+    volumes:
+    - /var/lib/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: mydomain
+      MYSQL_USER: mydomain_user
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+    command: --innodb-buffer-pool-size=200M
