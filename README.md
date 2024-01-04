@@ -28,4 +28,4 @@ certbot renew
 docker restart wordpress_web_1
 ```
 
-A more detailed setup is available on 
+A more detailed setup is available on Medium https://medium.com/@1dank/wordpress-on-docker-on-a-droplet-6249b525ad95
